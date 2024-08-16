@@ -8,21 +8,24 @@
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
       <link rel="stylesheet" href="app.css"/>
   </head>
-  <body class="p10">
+  <body class="p10 flex ver" style="height: 100vh;">
 
-    <div x-data="app">
+    <div x-data="app" class="flex ver fg1">
 
       <div class="flex hor start center">
         <h1 x-data="{ message: 'Vaults' }" x-text="message"></h1>
 
         <!--Add buttons to initiate auth sequence and sign out-->
-        <button id="authorize_button" onclick="handleAuthClick()" x-show="page == PAGES.SignIn">
+        <button onclick="handleAuthClick()" x-show="!signedIn">
           <i class="fa fa-user w20"></i>
-          Authorize
+          SignIn
         </button>
-        <button id="signout_button" onclick="handleSignoutClick()" x-show="page != PAGES.SignIn">
+        <button onclick="handleSignoutClick()" x-show="signedIn">
           <i class="fa fa-right-from-bracket w20"></i>
           Sign Out
+        </button>
+        <button @click="showLogs = !showLogs;" class="flex hor centered h25">
+          <i class="fa fa-terminal"></i>
         </button>
       </div>
 
@@ -36,14 +39,12 @@
         </div>
         <ul>
           <template x-for="vaultFile in vaultFiles">
-            <li class="flex hor">
+            <li class="flex hor start center m5 p5 selectable">
               <!-- <p x-text="vaultFile.id"></p>
               <p> | </p> -->
               <p x-text="vaultFile.name"></p>
-              <p> | </p>
-              <button @click="openVault(vaultFile)">
-                <i class="fa fa-book-open w20"></i>
-                Open
+              <button @click="openVault(vaultFile)" class="flex hor centered h25">
+                <i class="fa fa-database"></i>Open
               </button>
             </li>
           </template>
@@ -113,6 +114,26 @@
 
         </div>
       </template>
+
+      <template x-if="loadingModal.show">
+        <div class="modal-overlay flex center">
+          <div class="modal-box flex hor start centered p10">
+            <i class="fa fa-refresh rotate"></i>
+            <p x-text="loadingModal.message"></p>
+          </div>
+        </div>
+      </template>
+
+      <div class="flex fg1"></div>
+
+      <div class="flex hor h100" style="border: solid 1px lightgray; overflow-y: auto;" x-show="showLogs">
+        <pre x-text="logmessage" class="fg1"></pre>
+        <div class="flex ver fg0">
+          <button @click="clearLog()" class="flex hor centered h25">
+            <i class="fa fa-broom"></i>
+          </button>
+        </div>
+      </div>
 
     </div>
 

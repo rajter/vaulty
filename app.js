@@ -17,9 +17,6 @@ let backupVaultFolder;
 const vaultFolderName = "Vault";
 const vaultBackupFolderName = "Backup";
 
-document.getElementById('authorize_button').style.visibility = 'hidden';
-document.getElementById('signout_button').style.visibility = 'hidden';
-
 const PAGES = {
     SignIn: "SignIn",
     PickVault: "PickVault",
@@ -28,19 +25,48 @@ const PAGES = {
 }
 
 const app = {
+    signedIn: false,
+    loadingModal: {
+        show: false,
+        message: "",
+    },
+    showLogs: false,
+    logmessage: "",
     page: PAGES.SignIn,
     vault: null,
     vaultFiles: [],
     secretToEdit: {},
     secretToEditIndex: -1,
+    addlog(message){
+        if(this.logmessage.length == 0)
+            this.logmessage += message;
+        else
+            this.logmessage += "\r\n" + message;
+    },
+    clearLog(){
+        this.logmessage = "";
+    },
     showPage(pageToShow){
         this.page = pageToShow;
     },
+    showLoadingMessage(message){
+        this.loadingModal.message = message;
+        this.loadingModal.show = true;
+    },
+    hideLoadingMessage(){
+        this.loadingModal.message = "";
+        this.loadingModal.show = false;
+    },
+    setVaultFiles(files){
+        this.vaultFiles = files.sort(function(a, b){return a.name.localeCompare(b.name)}); ;
+    },
     async openVault(vaultFile) {
-        var vaultContent = await GetFileContent(vaultFile.id);
-        var decryptedVaultContent = await cryptos.decrypt(vaultContent);
+
+        this.showLoadingMessage(`Opening vault ${vaultFile.name}`);
 
         try{
+            var vaultContent = await GetFileContent(vaultFile.id);
+            var decryptedVaultContent = await cryptos.decrypt(vaultContent);
             var vault = JSON.parse(decryptedVaultContent);
             this.vault = vault;
             this.vault.isNew = false;
@@ -48,6 +74,8 @@ const app = {
             this.showPage(PAGES.VaultEdit);
         } catch(error) {
             this.vault = null;
+        } finally{
+            this.hideLoadingMessage();
         }
     },
     async closeVault(){
@@ -95,6 +123,8 @@ const app = {
         if(this.vault == null)
             return;
 
+        this.showLoadingMessage(`Saving vault`);
+
         if(this.vault.isNew)
         {
             var encryptedVault = await cryptos.encryptWithPass(JSON.stringify(this.vault), this.vault.password);
@@ -107,6 +137,8 @@ const app = {
             var encryptedVault = await cryptos.encryptWithPass(JSON.stringify(this.vault), this.vault.password);
             await UpdateFileContent(this.vault.fileId, encryptedVault);
         }
+
+        this.hideLoadingMessage();
 
         await SearchForVaultFiles();
     },
@@ -135,6 +167,9 @@ const app = {
         const name = window.prompt("Name");
         const username = window.prompt("Username");
         const password = window.prompt("Password");
+
+        if(isNullOrUndef(name) || isNullOrUndef(username) || isNullOrUndef(password))
+            return;
 
         this.vault.secrets.push({
             id: 1,
@@ -204,7 +239,6 @@ function gapiLoaded() {
             discoveryDocs: [DISCOVERY_DOC],
         });
         gapiInited = true;
-        maybeEnableButtons();
     });
 }
 
@@ -216,13 +250,6 @@ function gisLoaded() {
         redirect_uri: '',
     });
     gisInited = true;
-    maybeEnableButtons();
-}
-
-function maybeEnableButtons() {
-    if (gapiInited && gisInited) {
-        document.getElementById('authorize_button').style.visibility = 'visible';
-    }
 }
 
 function handleAuthClick() {
@@ -249,32 +276,26 @@ function handleSignoutClick() {
     if (token !== null) {
         google.accounts.oauth2.revoke(token.access_token);
         gapi.client.setToken('');
+        app.$data.signedIn = false;
         app.$data.showPage(PAGES.SignIn);
-        document.getElementById('authorize_button').innerText = 'Authorize';
-        document.getElementById('signout_button').style.visibility = 'hidden';
     }
 }
 
 async function AfterSignIn()
 {
+    app.$data.signedIn = true;
     app.$data.showPage(PAGES.PickVault);
 
-    document.getElementById('signout_button').style.visibility = 'visible';
-    document.getElementById('authorize_button').innerText = 'Refresh';
-
     vaultFolder = await FindFolder(vaultFolderName);
-    if(vaultFolder == null)
-    {
+    if(vaultFolder == null){
         await CreateFolder(vaultFolderName);
         vaultFolder = await FindFolder(vaultFolderName);
     }
 
-    if(vaultFolder != null)
-    {
+    if(vaultFolder != null){
         backupVaultFolder = await FindFolderInFolder(vaultFolder.id, vaultBackupFolderName);
 
-        if(backupVaultFolder == null)
-        {
+        if(backupVaultFolder == null){
             await CreateSubFolder(vaultFolder.id, vaultBackupFolderName);
             backupVaultFolder = await FindFolderInFolder(vaultFolder.id, vaultBackupFolderName);
         }
@@ -283,7 +304,7 @@ async function AfterSignIn()
     if(vaultFolder != null && backupVaultFolder != null){
         await SearchForVaultFiles();
     }
-    else {
+    else{
         throw new Error('Folders not found');
     }
 }
@@ -292,14 +313,17 @@ async function SearchForVaultFiles() {
     if(vaultFolder === 'undefined' || vaultFolder === null)
         return;
 
+    app.$data.showLoadingMessage("Searching for vaults.");
     var files = await SearchFilesInFolder(vaultFolder.id, 'text/plain');
     if (files && files.length > 0) {
-        app.$data.vaultFiles = files;
+        app.$data.setVaultFiles(files);
+        app.$data.hideLoadingMessage();
         console.log('Found .txt files:');
         files.forEach(file => {
             console.log(`${file.name} (ID: ${file.id})`);
         });
-    } else {
+    }
+    else {
         console.log('No .txt files found in the specified folder.');
     }
 }
@@ -483,3 +507,23 @@ async function UpdateFileContent(fileId, newFileContent) {
         throw error; // Rethrow the error for further handling if needed
     }
 }
+
+const originalLog = console.log;
+const originalError = console.error;
+
+// Override console.log
+console.log = function(...args) {
+    // Show a custom message
+    app.$data.addlog(args)
+    // Call the original console.log with the provided arguments
+    originalLog.apply(console, args);
+};
+
+// Override console.error
+console.error = function(...args) {
+    // Show a custom message
+    app.$data.addlog(args)
+    // Call the original console.error with the provided arguments
+    originalError.apply(console, args);
+};
+
