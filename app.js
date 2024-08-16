@@ -13,11 +13,12 @@ let tokenClient;
 let gapiInited = false;
 let gisInited = false;
 let vaultFolder;
+let backupVaultFolder;
+const vaultFolderName = "Vault";
+const vaultBackupFolderName = "Backup";
 
 document.getElementById('authorize_button').style.visibility = 'hidden';
 document.getElementById('signout_button').style.visibility = 'hidden';
-
-console.warn("This is a warning!");
 
 const PAGES = {
     SignIn: "SignIn",
@@ -50,7 +51,7 @@ const app = {
         }
     },
     async closeVault(){
-        if(confirm("Save vault?"))
+        if(isNotNullOrUndef(this.vault) && confirm("Save vault?"))
         {
             await this.saveVault();
             this.vault = null;
@@ -63,11 +64,21 @@ const app = {
         this.showPage(PAGES.PickVault);
     },
     async createVault(){
-
         this.closeVault();
 
         const name = window.prompt("Name");
+        if(name == null)
+        {
+            this.showPage(PAGES.PickVault);
+            return;
+        }
+
         const password = window.prompt("Password");
+        if(password == null)
+        {
+            this.showPage(PAGES.PickVault);
+            return;
+        }
 
         this.vault = {
             isNew: true,
@@ -75,7 +86,9 @@ const app = {
             name: name,
             password: password,
             secrets :[]
-        }
+        };
+
+        this.showPage(PAGES.VaultEdit);
     },
     async saveVault()
     {
@@ -90,11 +103,21 @@ const app = {
         }
         else
         {
+            await this.backupVault();
             var encryptedVault = await cryptos.encryptWithPass(JSON.stringify(this.vault), this.vault.password);
             await UpdateFileContent(this.vault.fileId, encryptedVault);
         }
 
         await SearchForVaultFiles();
+    },
+    async backupVault(){
+        if(isNullOrUndef(this.vault))
+            return;
+
+        var vaultContent = await GetFileContent(this.vault.fileId);
+        var date = new Date();
+        var dateString =  date.getDate() + "_" + (date.getMonth()+1) + "_" + date.getFullYear() + "_" + date.getHours() + "_" + date.getMinutes() + "_" + date.getSeconds();
+        var backupVault = await CreateFileInFolder(backupVaultFolder.id, this.vault.name + "(" + dateString + ")" +  ".bak", vaultContent);
     },
     selectSecret(secret){
         if(isNullOrUndef(secret))
@@ -165,9 +188,12 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('passwordComponent', createPassComponent);
 });
 
-function isNullOrUndef(o)
-{
+function isNullOrUndef(o){
     return o === "undefined" || o === null;
+}
+
+function isNotNullOrUndef(o){
+    return !isNullOrUndef(o);
 }
 
 function gapiLoaded() {
@@ -236,15 +262,30 @@ async function AfterSignIn()
     document.getElementById('signout_button').style.visibility = 'visible';
     document.getElementById('authorize_button').innerText = 'Refresh';
 
-    //await ListFiles();
-    vaultFolder = await FindVaultFolder();
+    vaultFolder = await FindFolder(vaultFolderName);
     if(vaultFolder == null)
     {
-        CreateFolder("Vault");
-        vaultFolder = await FindVaultFolder();
+        await CreateFolder(vaultFolderName);
+        vaultFolder = await FindFolder(vaultFolderName);
     }
 
-    await SearchForVaultFiles();
+    if(vaultFolder != null)
+    {
+        backupVaultFolder = await FindFolderInFolder(vaultFolder.id, vaultBackupFolderName);
+
+        if(backupVaultFolder == null)
+        {
+            await CreateSubFolder(vaultFolder.id, vaultBackupFolderName);
+            backupVaultFolder = await FindFolderInFolder(vaultFolder.id, vaultBackupFolderName);
+        }
+    }
+
+    if(vaultFolder != null && backupVaultFolder != null){
+        await SearchForVaultFiles();
+    }
+    else {
+        throw new Error('Folders not found');
+    }
 }
 
 async function SearchForVaultFiles() {
@@ -263,11 +304,8 @@ async function SearchForVaultFiles() {
     }
 }
 
-async function FindVaultFolder() {
-    const folderName = "Vault";
-    const drive = gapi.client.drive;
-
-    var response = await drive.files.list({
+async function FindFolder(folderName) {
+    const response = await gapi.client.drive.files.list({
         q: `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`,
         fields: "files(id, name)"
     });
@@ -281,15 +319,43 @@ async function FindVaultFolder() {
     }
 }
 
-function CreateFolder(folderName) {
-    const drive = gapi.client.drive;
+async function FindFolderInFolder(parentFolderId, folderName) {
+    const response = await gapi.client.drive.files.list({
+        'q': `'${parentFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and name = '${folderName}'`,
+        'fields': "files(id, name)"
+    });
 
+    const folders = response.result.files;
+
+    if (folders.length > 0) {
+        return folders[0];
+    }
+}
+
+async function CreateFolder(folderName) {
     const fileMetadata = {
         name: folderName,
         mimeType: 'application/vnd.google-apps.folder'
     };
 
-    drive.files.create({
+    await gapi.client.drive.files.create({
+        resource: fileMetadata,
+        fields: 'id'
+    }).then(function (response) {
+        console.log(`Folder "${folderName}" created with ID: ${response.result.id}`);
+    }).catch(function (error) {
+        console.error("Error creating folder: ", error);
+    });
+}
+
+async function CreateSubFolder(parentFolderId, folderName) {
+    const fileMetadata = {
+        name: folderName,
+        mimeType: 'application/vnd.google-apps.folder',
+        parents: [parentFolderId]
+    };
+
+    await gapi.client.drive.files.create({
         resource: fileMetadata,
         fields: 'id'
     }).then(function (response) {
