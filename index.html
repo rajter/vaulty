@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <title>Drive API Quickstart</title>
+      <meta charset="utf-8" />
+      <script src="//unpkg.com/alpinejs" defer></script>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+      <link rel="stylesheet" href="app.css"/>
+  </head>
+  <body class="p10">
+
+    <div x-data="app">
+
+      <div class="flex hor start center">
+        <h1 x-data="{ message: 'Vaults' }" x-text="message"></h1>
+
+        <!--Add buttons to initiate auth sequence and sign out-->
+        <button id="authorize_button" onclick="handleAuthClick()" x-show="page == PAGES.SignIn">
+          <i class="fa fa-user w20"></i>
+          Authorize
+        </button>
+        <button id="signout_button" onclick="handleSignoutClick()" x-show="page != PAGES.SignIn">
+          <i class="fa fa-right-from-bracket w20"></i>
+          Sign Out
+        </button>
+      </div>
+
+      <div class="flex ver" x-show="page == PAGES.PickVault">
+        <div class="flex hor">
+          <button @click="createVault()" x-show="vault === null">
+            <i class="fa fa-user w20"></i>
+            CreateVault
+          </button>
+          <button onclick="SearchForVaultFiles()">Refresh Files</button>
+        </div>
+        <ul>
+          <template x-for="vaultFile in vaultFiles">
+            <li class="flex hor">
+              <!-- <p x-text="vaultFile.id"></p>
+              <p> | </p> -->
+              <p x-text="vaultFile.name"></p>
+              <p> | </p>
+              <button @click="openVault(vaultFile)">
+                <i class="fa fa-book-open w20"></i>
+                Open
+              </button>
+            </li>
+          </template>
+        </ul>
+      </div>
+
+      <div class="flex ver" x-show="page == PAGES.VaultEdit">
+
+        <div class="flex hor" x-show="vault !== null">
+          <button @click="saveVault()"><i class="fa fa-floppy-disk w20"></i>SaveVault</button>
+          <button @click="closeVault()"><i class="fa fa-circle-xmark w20"></i>CloseVault</button>
+          <button @click="addSecret()"><i class="fa fa-plus w20"></i>Add secret</button>
+        </div>
+
+        <div x-show="vault !== null">
+          <p x-text="vault?.name"></p>
+          <ul>
+            <template x-for="secret in vault?.secrets">
+              <li class="flex hor start center mv2 p5 selectable" x-bind:class="secret.selected ? 'selected' : ''" @click="selectSecret(secret)">
+                <i class="fa fa-tag h15"></i>
+                <p x-text="secret.name"></p>
+                <i class="fa fa-user h15"></i>
+                <p x-text="secret.username"></p>
+                <p> | </p>
+                <div class="flex hor fg1" x-data="passwordComponent">
+                  <button @click="showPass(secret)" class="p2"><i class="fa fa-eye w20"></i></button>
+                  <p x-text="password"></p>
+                </div>
+                <div class="flex hor" x-show="secret.selected">
+                  <button @click="editSecret(secret)" class="p2"><i class="fa fa-edit w20"></i></button>
+                  <button @click="deleteSecret(secret)" class="p2"><i class="fa fa-trash-can w20"></i></button>
+                </div>
+              </li>
+            </template>
+          </ul>
+        </div>
+
+      </div>
+
+      <template x-if="page === PAGES.SecretEdit">
+        <div class="flex ver">
+
+          <div class="flex hor start center">
+            <i class="fa fa-tag h15"></i>
+            <label for="name">Name:</label>
+            <input type="text" name="name" x-model="secretToEdit.name"/>
+          </div>
+
+          <div class="flex hor start center">
+            <i class="fa fa-user h15"></i>
+            <label for="username">UserName:</label>
+            <input type="text" name="username" x-model="secretToEdit.username"/>
+          </div>
+
+          <div class="flex hor start center"
+          x-data="{type: 'password', showPass(){this.type = (this.type == 'text' ? 'password' : 'text');} }">
+            <i class="fa fa-user-secret h15"></i>
+            <label for="password">Password:</label>
+            <input x-bind:type="type" name="password" x-model="secretToEdit.password"/>
+            <button @click="showPass" class="p2"><i class="fa fa-eye w20"></i></button>
+          </div>
+
+          <div class="flex hor">
+            <button @click="acceptEdit"><i class="fa fa-check w20"></i></button>
+            <button @click="cancelEdit"><i class="fa fa-xmark w20"></i></button>
+          </div>
+
+        </div>
+      </template>
+
+    </div>
+
+    <script type="text/javascript" src="crypto.js"></script>
+    <script type="text/javascript" src="app.js"></script>
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+
+  </body>
+</html>
