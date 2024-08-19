@@ -176,6 +176,7 @@ const app = {
             username: username,
             password: password,
             notes: '',
+            url: ''
         });
     },
     editSecret(secret){

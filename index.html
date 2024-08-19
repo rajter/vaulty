@@ -40,8 +40,6 @@
         <ul>
           <template x-for="vaultFile in vaultFiles">
             <li class="flex hor start center m5 p5 selectable">
-              <!-- <p x-text="vaultFile.id"></p>
-              <p> | </p> -->
               <p x-text="vaultFile.name"></p>
               <button @click="openVault(vaultFile)" class="flex hor centered h25">
                 <i class="fa fa-database"></i>Open
@@ -64,13 +62,13 @@
           <ul>
             <template x-for="secret in vault?.secrets">
               <li class="flex hor start center mv2 p5 selectable" x-bind:class="secret.selected ? 'selected' : ''" @click="selectSecret(secret)">
-                <i class="fa fa-tag h15"></i>
-                <p x-text="secret.name"></p>
+                <h3 x-text="secret.name"></h3>
                 <i class="fa fa-user h15"></i>
                 <p x-text="secret.username"></p>
-                <p> | </p>
-                <div class="flex hor fg1" x-data="passwordComponent">
-                  <button @click="showPass(secret)" class="p2"><i class="fa fa-eye w20"></i></button>
+                <i class="fa fa-globe h15"></i>
+                <p x-text="secret.url"></p>
+                <div class="flex hor fg1 mh5" x-data="passwordComponent">
+                  <button @click="showPass(secret)" class="p2"><i class="fa fa-key w20"></i></button>
                   <p x-text="password"></p>
                 </div>
                 <div class="flex hor" x-show="secret.selected">
@@ -116,6 +114,12 @@
                 <button @click="replacePassword" class="p2"><i class="fa fa-arrows-left-right w20"></i></button>
               </div>
             </div>
+          </div>
+
+          <div class="flex hor start center">
+            <i class="fa fa-globe h15"></i>
+            <label for="url">URL:</label>
+            <input type="text" name="url" x-model="secretToEdit.url"/>
           </div>
 
           <div class="flex hor start center">
