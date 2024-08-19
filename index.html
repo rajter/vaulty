@@ -118,6 +118,12 @@
             </div>
           </div>
 
+          <div class="flex hor start center">
+            <i class="fa fa-book h15"></i>
+            <label for="notes">Notes:</label>
+          </div>
+          <textarea type="text" name="notes" x-model="secretToEdit.notes" rows="10" style="width: 350px;"></textarea>
+
           <div class="flex hor">
             <button @click="acceptEdit"><i class="fa fa-check w20"></i></button>
             <button @click="cancelEdit"><i class="fa fa-xmark w20"></i></button>
