@@ -74,6 +74,8 @@
                   <p x-text="password"></p>
                 </div>
                 <div class="flex hor" x-show="secret.selected">
+                  <button @click="toClipboard(secret.username)" class="p2"><i class="fa fa-id-card w20"></i></button>
+                  <button @click="toClipboard(secret.password)" class="p2"><i class="fa fa-key w20"></i></button>
                   <button @click="editSecret(secret)" class="p2"><i class="fa fa-edit w20"></i></button>
                   <button @click="deleteSecret(secret)" class="p2"><i class="fa fa-trash-can w20"></i></button>
                 </div>
@@ -100,11 +102,20 @@
           </div>
 
           <div class="flex hor start center"
-          x-data="{type: 'password', showPass(){this.type = (this.type == 'text' ? 'password' : 'text');} }">
+               x-data="{type: 'password', showPass(){this.type = (this.type == 'text' ? 'password' : 'text');} }">
             <i class="fa fa-user-secret h15"></i>
             <label for="password">Password:</label>
             <input x-bind:type="type" name="password" x-model="secretToEdit.password"/>
             <button @click="showPass" class="p2"><i class="fa fa-eye w20"></i></button>
+            <div class="flex hor" x-data="generatePasswordComponent">
+              <button @click="showPasswordGenerator" class="p2"><i class="fa fa-key w20"></i></button>
+              <div class="flex hor" x-show="passGeneratorOpen">
+                <button @click="generatePassword" class="p2"><i class="fa fa-keyboard w20"></i></button>
+                <input type="number" x-model="passLength" class="w60"/>
+                <input type="text" x-model="password"/>
+                <button @click="replacePassword" class="p2"><i class="fa fa-arrows-left-right w20"></i></button>
+              </div>
+            </div>
           </div>
 
           <div class="flex hor">

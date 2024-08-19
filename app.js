@@ -1,6 +1,5 @@
 // TODO(developer): Set to client ID and API key from the Developer Console
 const CLIENT_ID = '298164292441-org5gfrh6692tou0j0evvkm0q247u2oa.apps.googleusercontent.com';
-const API_KEY = '';
 
 // Discovery doc URL for APIs used by the quickstart
 const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
@@ -207,6 +206,9 @@ const app = {
     cancelEdit(){
         this.secretToEdit = {};
         this.showPage(PAGES.VaultEdit);
+    },
+    toClipboard(text) {
+        navigator.clipboard.writeText(text);
     }
 }
 
@@ -218,9 +220,25 @@ const createPassComponent = () => ({
     }
 });
 
+const createGeneratePasswordComponent = () => ({
+    passGeneratorOpen: false,
+    passLength: 16,
+    password: '',
+    showPasswordGenerator() {
+        this.passGeneratorOpen = !this.passGeneratorOpen;
+    },
+    generatePassword() {
+        this.password = cryptos.generatePassword(this.passLength);
+    },
+    replacePassword() {
+        app.$data.secretToEdit.password = this.password;
+    }
+});
+
 document.addEventListener('alpine:init', () => {
     Alpine.data('app', () => app);
     Alpine.data('passwordComponent', createPassComponent);
+    Alpine.data('generatePasswordComponent', createGeneratePasswordComponent);
 });
 
 function isNullOrUndef(o){
@@ -235,7 +253,7 @@ function gapiLoaded() {
     gapi.load('client', async () =>
     {
         await gapi.client.init({
-            apiKey: API_KEY,
+            // apiKey: API_KEY,
             discoveryDocs: [DISCOVERY_DOC],
         });
         gapiInited = true;

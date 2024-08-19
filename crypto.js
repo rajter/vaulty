@@ -2,6 +2,34 @@
 
 class cryptos{
 
+    static generatePassword(length = 12) {
+        const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+        const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const numbers = '0123456789';
+        const symbols = '!@#$%^&*()_+[]{}|;:,.<>?';
+
+        // Combine all character sets
+        const allCharacters = lowercase + uppercase + numbers + symbols;
+
+        let password = '';
+
+        // Ensure the password contains at least one character from each set
+        password += lowercase[Math.floor(Math.random() * lowercase.length)];
+        password += uppercase[Math.floor(Math.random() * uppercase.length)];
+        password += numbers[Math.floor(Math.random() * numbers.length)];
+        password += symbols[Math.floor(Math.random() * symbols.length)];
+
+        // Fill the rest of the password length with random characters
+        for (let i = 4; i < length; i++) {
+            password += allCharacters[Math.floor(Math.random() * allCharacters.length)];
+        }
+
+        // Shuffle the password to ensure randomness
+        password = password.split('').sort(() => 0.5 - Math.random()).join('');
+
+        return password;
+    }
+
     static async encrypt(data) {
         const password = window.prompt("Password");
         const encryptedData = await this.#encryptData(data, password);
