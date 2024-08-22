@@ -333,7 +333,7 @@ ul {
 }
 
 .bordered{
-  border: 1px solid gainsboro;
+  border: 1px solid gainsboro !important;
   border-radius: 2px;
   text-align: center;
   padding: 5px;
@@ -393,3 +393,6 @@ ul {
   0 { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+li:nth-child(odd) { background-color:#11111109; }
+li:nth-child(even) { background-color:white; }

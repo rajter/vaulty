@@ -58,14 +58,9 @@ class cryptos{
     static #dec = new TextDecoder();
 
     // for large strings, use this from https://stackoverflow.com/a/49124600
-    static #buff_to_base64 = (buff) => btoa(
-        new Uint8Array(buff).reduce(
-            (data, byte) => data + String.fromCharCode(byte), ''
-        )
-    );
+    static #buff_to_base64 = (buff) => btoa(new Uint8Array(buff).reduce((data, byte) => data + String.fromCharCode(byte), ''));
 
-    static #base64_to_buf = (b64) =>
-        Uint8Array.from(atob(b64), (c) => c.charCodeAt(null));
+    static #base64_to_buf = (b64) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(null));
 
     static #getPasswordKey(password){
         return window.crypto.subtle.importKey("raw", this.#enc.encode(password), "PBKDF2", false, [

@@ -8,9 +8,9 @@
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
       <link rel="stylesheet" href="app.css"/>
   </head>
-  <body class="p10 flex ver" style="height: 100vh;">
+  <body class="p10 flex ver" style="height: 100vh;" x-data="app">
 
-    <div x-data="app" class="flex ver fg1">
+    <div class="flex ver fg1">
 
       <div class="flex hor start center">
         <h1 x-data="{ message: 'Vaults' }" x-text="message"></h1>
@@ -32,17 +32,20 @@
       <div class="flex ver" x-show="page == PAGES.PickVault">
         <div class="flex hor">
           <button @click="createVault()">
-            <i class="fa fa-user w20"></i>
+            <i class="fa fa-vault w20"></i>
             CreateVault
           </button>
-          <button onclick="SearchForVaultFiles()">Refresh Files</button>
+          <button onclick="SearchForVaultFiles()">
+            <i class="fa fa-refresh w20"></i>
+            Refresh Vault List</button>
         </div>
         <ul>
           <template x-for="vaultFile in vaultFiles">
-            <li class="flex hor start center m5 p5 selectable">
-              <p x-text="vaultFile.name"></p>
+            <li class="flex hor start center m5 p5 bordered selectable">
+              <i class="fa fa-vault"></i>
+              <h4 x-text="vaultFile.name" class="mh10"><h4/>
               <button @click="openVault(vaultFile)" class="flex hor centered h25">
-                <i class="fa fa-database"></i>Open
+                <i class="fa fa-lock-open"></i>Open
               </button>
             </li>
           </template>
@@ -51,15 +54,18 @@
 
       <div class="flex ver" x-show="page == PAGES.VaultEdit">
 
-        <div class="flex hor" x-show="vault !== null">
+        <div class="flex hor">
           <button @click="saveVault()"><i class="fa fa-floppy-disk w20"></i>SaveVault</button>
           <button @click="closeVault()"><i class="fa fa-circle-xmark w20"></i>CloseVault</button>
           <button @click="addSecret()"><i class="fa fa-plus w20"></i>Add secret</button>
         </div>
 
-        <div x-show="vault !== null">
-          <p x-text="vault?.name"></p>
-          <ul>
+        <div>
+          <div class="flex hor mv10">
+            <!-- <i class="fa fa-database h25"></i> -->
+            <h2 class="fa fa-database" x-text="' ' + vault?.name"></h2>
+          </div>
+          <ul class="mh5">
             <template x-for="secret in vault?.secrets">
               <li class="flex hor start center mv2 p5 selectable" x-bind:class="secret.selected ? 'selected' : ''" @click="selectSecret(secret)">
                 <h3 x-text="secret.name"></h3>
@@ -136,15 +142,6 @@
         </div>
       </template>
 
-      <template x-if="loadingModal.show">
-        <div class="modal-overlay flex center">
-          <div class="modal-box flex hor start centered p10">
-            <i class="fa fa-refresh rotate"></i>
-            <p x-text="loadingModal.message"></p>
-          </div>
-        </div>
-      </template>
-
       <div class="flex fg1"></div>
 
       <div class="flex hor h100" style="border: solid 1px lightgray; overflow-y: auto;" x-show="showLogs">
@@ -155,6 +152,15 @@
           </button>
         </div>
       </div>
+
+      <template x-if="loadingModal.show">
+        <div class="modal-overlay flex center">
+          <div class="modal-box flex hor start centered p10">
+            <i class="fa fa-refresh rotate"></i>
+            <p x-text="loadingModal.message"></p>
+          </div>
+        </div>
+      </template>
 
     </div>
 
