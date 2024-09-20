@@ -281,6 +281,8 @@ function handleAuthClick() {
         await AfterSignIn();
     };
 
+    tryLoadToken();
+
     if (gapi.client.getToken() === null) {
         // Prompt the user to select a Google Account and ask for consent to share their data
         // when establishing a new session.
@@ -298,11 +300,35 @@ function handleSignoutClick() {
         gapi.client.setToken('');
         app.$data.signedIn = false;
         app.$data.showPage(PAGES.SignIn);
+        saveToken();
     }
+}
+
+function saveToken() {
+    localStorage.setItem('gapi_token', JSON.stringify(gapi.client.getToken()));
+}
+
+function getToken() {
+    let tokenString = localStorage.getItem('gapi_token');
+    let token = JSON.parse(tokenString);
+    return token;
+}
+
+function tryLoadToken() {
+    var token = getToken();
+    if (isNullOrUndef(token)) {
+        return false;
+    }
+
+    gapi.client.setToken(token);
+
+    return true;
 }
 
 async function AfterSignIn()
 {
+    saveToken();
+
     app.$data.signedIn = true;
     app.$data.showPage(PAGES.PickVault);
 
