@@ -68,18 +68,15 @@
           <ul class="mh5">
             <template x-for="secret in vault?.secrets">
               <li class="flex hor start center mv2 p5 selectable" x-bind:class="secret.selected ? 'selected' : ''" @click="selectSecret(secret)">
+                <!-- <i class="fa fa-user h15"></i>
+                <p x-text="secret.username"></p> -->
+                <button @click="toClipboard(secret.username)" class="p2"><i class="fa fa-id-card w20"></i></button>
+                <button @click="toClipboard(secret.password)" class="p2"><i class="fa fa-key w20"></i></button>
+                <button @click="toClipboard(secret.url)" class="p2"><i class="fa fa-globe w20"></i></button>
                 <h3 x-text="secret.name"></h3>
-                <i class="fa fa-user h15"></i>
-                <p x-text="secret.username"></p>
-                <i class="fa fa-globe h15"></i>
                 <p x-text="secret.url"></p>
-                <div class="flex hor fg1 mh5" x-data="passwordComponent">
-                  <button @click="showPass(secret)" class="p2"><i class="fa fa-key w20"></i></button>
-                  <p x-text="password"></p>
-                </div>
+                <div class="fg1"></div>
                 <div class="flex hor" x-show="secret.selected">
-                  <button @click="toClipboard(secret.username)" class="p2"><i class="fa fa-id-card w20"></i></button>
-                  <button @click="toClipboard(secret.password)" class="p2"><i class="fa fa-key w20"></i></button>
                   <button @click="editSecret(secret)" class="p2"><i class="fa fa-edit w20"></i></button>
                   <button @click="deleteSecret(secret)" class="p2"><i class="fa fa-trash-can w20"></i></button>
                 </div>

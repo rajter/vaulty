@@ -163,21 +163,35 @@ const app = {
         if(this.vault == null)
             return;
 
-        const name = window.prompt("Name");
-        const username = window.prompt("Username");
-        const password = window.prompt("Password");
+        // const name = window.prompt("Name");
+        // const username = window.prompt("Username");
+        // const password = window.prompt("Password");
 
-        if(isNullOrUndef(name) || isNullOrUndef(username) || isNullOrUndef(password))
-            return;
+        // if(isNullOrUndef(name) || isNullOrUndef(username) || isNullOrUndef(password))
+        //     return;
 
-        this.vault.secrets.push({
-            id: 1,
-            name: name,
-            username: username,
-            password: password,
+        // this.vault.secrets.push({
+        //     id: 1,
+        //     name: name,
+        //     username: username,
+        //     password: password,
+        //     notes: '',
+        //     url: ''
+        // });
+
+        var newSecret = {
+            id: -1,
+            name: '',
+            username: '',
+            password: '',
             notes: '',
-            url: ''
-        });
+            url: '',
+            state: 'new'
+        };
+
+        this.secretToEdit = newSecret;
+        this.secretToEditIndex = -1;
+        this.showPage(PAGES.SecretEdit);
     },
     editSecret(secret){
         if(isNullOrUndef(secret))
@@ -196,10 +210,21 @@ const app = {
             this.vault.secrets.splice(this.vault.secrets.indexOf(secret), 1);
         }
     },
-    acceptEdit(){
-        if(this.secretToEditIndex >= 0 && this.secretToEditIndex < this.vault.secrets.length)
+    acceptEdit() {
+        if (isNullOrUndef(this.secretToEdit))
+            return;
+
+        if (this.secretToEdit.state == 'new')
         {
-            this.vault.secrets[this.secretToEditIndex] = structuredClone(JSON.parse(JSON.stringify(this.secretToEdit)));
+            this.secretToEdit.state = '';
+            this.vault.secrets.push(this.secretToEdit);
+        }
+        else
+        {
+            if (this.secretToEditIndex >= 0 && this.secretToEditIndex < this.vault.secrets.length)
+            {
+                this.vault.secrets[this.secretToEditIndex] = structuredClone(JSON.parse(JSON.stringify(this.secretToEdit)));
+            }
         }
 
         this.secretToEdit = {};
